@@ -21,16 +21,16 @@ camera_offset_y = 0
 
 #Gravity and Velocity
 player_velocity_y = 0
-gravity = 200
+gravity = 50
 on_ground = False
 
-ground_width = 800
+ground_width = 4000
 ground_height = 50
 ground_x = 0
 ground_y = screen.get_height() - 50 
 ground_rect = pygame.Rect(ground_x, ground_y, ground_width, ground_height)
 
-lower_ground_width = 800
+lower_ground_width = 4000
 lower_ground_height = 20
 lower_ground_x = 0
 lower_ground_y = 380
@@ -53,7 +53,30 @@ floating_platforms = [
     pygame.Rect(500, 350, 30, 30),
     pygame.Rect(600, 350, 30, 30),
     pygame.Rect(700, 350, 30, 30),
-    pygame.Rect(770, 350, 30, 30),
+    pygame.Rect(1350, 350, 30, 30),
+    pygame.Rect(1430, 290, 30, 30),
+    pygame.Rect(1550, 350, 30, 30),
+    pygame.Rect(1630, 350, 30, 30),
+]
+
+wall_2_width = 300
+wall_2_height = 200
+wall_2_x = 850
+wall_2_y = 120
+wall_2_rect = pygame.Rect(wall_2_x, wall_2_y, wall_2_width, wall_2_height)
+
+wall_3_width = 300
+wall_3_height = 30
+wall_3_x = 850
+wall_3_y = 100
+wall_3_rect = pygame.Rect(wall_3_x, wall_3_y, wall_3_width, wall_3_height)
+
+platforms = [
+    pygame.Rect(1200, 300, 40, 20),
+    pygame.Rect(1250, 250, 40, 20),
+    pygame.Rect(1200, 200, 40, 20),
+    pygame.Rect(1250, 150, 40, 20),
+    pygame.Rect(1200, 100, 40, 20),
 ]
 
 #Closing window
@@ -72,7 +95,7 @@ while running:
 
     dt = clock.tick(60) / 1000
 
-    screen.fill(("blue"))
+    screen.fill((87, 143, 202))
 
     if game_state == "menu":
         screen.fill((0, 0, 0)) # Fill screen with black
@@ -159,7 +182,46 @@ while running:
                 player_pos.x = screen.get_width() // 2
                 player_pos.y = screen.get_height() //2  
                 player_velocity_y = 0
-                on_grounf = False 
+                on_ground = False 
+
+        if player_rect.colliderect(wall_2_rect):
+            overlap_x = min(player_rect.right, wall_2_rect.right) - max(player_rect.left, wall_2_rect.left)
+            overlap_y = min(player_rect.bottom, wall_2_rect.bottom) - max(player_rect.top, wall_2_rect.top)
+
+            if overlap_x > 0 and overlap_y > 0:  # Collision occurred
+                if overlap_x < overlap_y:  # Move horizontally
+                    if player_pos.x < wall_2_rect.centerx:  # Move right
+                        player_pos.x -= overlap_x
+                else:  # Move left
+                    player_pos.x += overlap_x
+            else:  # Move vertically
+                if player_pos.y < wall_2_rect.centery:  # Move down
+                    player_pos.y -= overlap_y
+                else:  # Move up
+                    player_pos.y += overlap_y
+
+        if player_rect.colliderect(wall_3_rect):
+            player_pos.y = wall_3_rect.top - player_radius
+            player_velocity_y = 0
+            on_ground = True
+        else:
+            on_ground = False          
+
+        for platform_rect in platforms:
+            if player_rect.colliderect(platform_rect):
+        # Check if the player is colliding with the top of the platform.
+                if player_rect.bottom <= platform_rect.top + 5: # added tolerance
+                    player_pos.y = platform_rect.top - player_radius
+                    player_velocity_y = 0
+                    on_ground = True
+                else:
+                    player_velocity_y = 0 #Stops the player from flying through the platform.
+            elif player_rect.colliderect(platform_rect) == False:
+                on_ground = False
+
+#Apply gravity to the player.
+            if on_ground == False:
+                player_velocity_y += gravity * dt
 
         # Calculate camera offset
         camera_offset_x = player_pos.x - screen.get_width() // 2
@@ -175,8 +237,19 @@ while running:
         second_textpos = text.get_rect()
         second_textpos.centerx = screen.get_width() // 2.5 - camera_offset_x # Adjusted text position with camera offset
         second_textpos.centery = 80
+        climb_text = font.render("Hold W to climb", 1, (10, 10, 10))
+        climb_textpos = climb_text.get_rect() # use climb_text.get_rect()
+        climb_textpos.centerx = int(screen.get_width() * 3.5) - camera_offset_x # Closer to the right edge
+        climb_textpos.centery = 160
+        screen.blit(climb_text, climb_textpos)
+        coruch_text = font.render("Press S to crouch", 1, (10, 10, 10))
+        coruch_textpos = text.get_rect()
+        coruch_textpos.centerx = int(screen.get_width() * 1.7) - camera_offset_x
+        coruch_textpos.centery = 200 
+        screen.blit(climb_text, climb_textpos)
         screen.blit(text, textpos)
         screen.blit(second_text, second_textpos)
+        screen.blit(coruch_text, coruch_textpos)
 
         original_radius = 20
         crouch_radius = 10
@@ -195,12 +268,19 @@ while running:
         pygame.draw.rect(screen, "brown", (wall_rect.x - camera_offset_x, wall_rect.y - camera_offset_y, wall_rect.width, wall_rect.height))
 
         # Draw the lower ground
-        pygame.draw.rect(screen, "brown", (lower_ground_rect.x - camera_offset_x, lower_ground_rect.y - camera_offset_y, lower_ground_rect.width, lower_ground_rect.height))
+        pygame.draw.rect(screen, (130, 91, 50), (lower_ground_rect.x - camera_offset_x, lower_ground_rect.y - camera_offset_y, lower_ground_rect.width, lower_ground_rect.height))
 
         # Draw the bad spots
         for platform_rect in floating_platforms:
             pygame.draw.rect(screen, "red", (platform_rect.x - camera_offset_x, platform_rect.y - camera_offset_y, platform_rect.width, platform_rect.height))
 
+        pygame.draw.rect(screen, (130, 91, 50), (wall_2_rect.x - camera_offset_x, wall_2_rect.y - camera_offset_y, wall_2_rect.width, wall_2_rect.height))
+
+
+        pygame.draw.rect(screen, "green", (wall_3_rect.x - camera_offset_x, wall_3_rect.y - camera_offset_y, wall_3_rect.width, wall_3_rect.height))
+        
+        for platform_rect in platforms:
+            pygame.draw.rect(screen, "white", (platform_rect.x - camera_offset_x, platform_rect.y - camera_offset_y, platform_rect.width, platform_rect.height))
         # Draws a circle to screen (again, this is redundant - remove this line)
         # pygame.draw.circle(screen, "white", player_pos, player_radius)
 
