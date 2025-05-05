@@ -24,17 +24,35 @@ player_velocity_y = 0
 gravity = 50
 on_ground = False
 
-ground_width = 4000
+ground_width = 2000
 ground_height = 50
 ground_x = 0
 ground_y = screen.get_height() - 50 
 ground_rect = pygame.Rect(ground_x, ground_y, ground_width, ground_height)
 
-lower_ground_width = 4000
+lower_ground_width = 2000
 lower_ground_height = 20
 lower_ground_x = 0
 lower_ground_y = 380
 lower_ground_rect = pygame.Rect(lower_ground_x, lower_ground_y, lower_ground_width, lower_ground_height)
+
+ground_2_width = 2000
+ground_2_height = 50
+ground_2_x = 2500
+ground_y = screen.get_height() - 50
+ground_2_rect = pygame.Rect(ground_2_x, ground_y, ground_2_width, ground_2_height)
+
+lower_ground_2_width = 2000
+lower_ground_2_height = 20
+lower_ground_2_x = 2500
+lower_ground_2_y = 380
+lower_ground_2_rect = pygame.Rect(lower_ground_2_x, lower_ground_2_y, lower_ground_2_width, lower_ground_2_height)
+
+ground_3_width = 200
+ground_3_height = 50
+ground_3_x = 2400
+ground_3_y = 600
+ground_3_rect = pygame.Rect(ground_3_x, ground_3_y, ground_3_width, ground_3_height)
 
 floating_platform_width = 30
 floating_platform_height = 30
@@ -57,6 +75,8 @@ floating_platforms = [
     pygame.Rect(1430, 290, 30, 30),
     pygame.Rect(1550, 350, 30, 30),
     pygame.Rect(1630, 350, 30, 30),
+    pygame.Rect(2000, 400, 400, 10),
+    pygame.Rect(2500, 400, 1000, 10),
 ]
 
 wall_2_width = 300
@@ -78,6 +98,12 @@ platforms = [
     pygame.Rect(1250, 150, 40, 20),
     pygame.Rect(1200, 100, 40, 20),
 ]
+
+end_width = 50
+end_height = 50
+end_x = 1952
+end_y = 320
+end_rect = pygame.Rect(end_x, end_y, end_width, end_height)
 
 #Closing window
 while running:
@@ -170,6 +196,20 @@ while running:
         else:
             on_ground = False
 
+        if player_rect.colliderect(ground_2_rect):
+            player_pos.y = ground_2_rect.top - player_radius
+            player_velocity_y = 0
+            on_ground = True
+        else:
+            on_ground = False
+
+        if player_rect.colliderect(ground_3_rect):
+            player_pos.y = ground_3_rect.top - player_radius
+            player_velocity_y = 0
+            on_ground = True
+        else:
+            on_ground = False
+
         if player_rect.colliderect(wall_rect):
             if player_pos.x < wall_rect.right and player_pos.x > wall_rect.left:
                 if player_pos.x < wall_rect.centerx:
@@ -182,7 +222,7 @@ while running:
                 player_pos.x = screen.get_width() // 2
                 player_pos.y = screen.get_height() //2  
                 player_velocity_y = 0
-                on_ground = False 
+                on_ground = False
 
         if player_rect.colliderect(wall_2_rect):
             overlap_x = min(player_rect.right, wall_2_rect.right) - max(player_rect.left, wall_2_rect.left)
@@ -225,7 +265,15 @@ while running:
 
         # Calculate camera offset
         camera_offset_x = player_pos.x - screen.get_width() // 2
-        camera_offset_y = 0
+
+        if player_pos.y < 0 or player_pos.y > screen.get_height():
+            camera_offset_y = player_pos.y - screen.get_height() // 2
+        else:
+            camera_offset_y = 0
+
+
+        if player_rect.colliderect(end_rect):
+            player_pos.x = 2550
 
         # Text
         font = pygame.font.Font(None, 36)
@@ -246,6 +294,11 @@ while running:
         coruch_textpos = text.get_rect()
         coruch_textpos.centerx = int(screen.get_width() * 1.7) - camera_offset_x
         coruch_textpos.centery = 200 
+        secert_text = font.render("You found the serect platform that doesn't do anything left, tag me on twitter/x!", 1, (10, 10, 10))
+        secert_textpos = text.get_rect()
+        secert_textpos.centerx = 400 - camera_offset_x
+        secert_textpos.centery = int(screen.get_height() * 0.9)
+        screen.blit(secert_text, secert_textpos)
         screen.blit(climb_text, climb_textpos)
         screen.blit(text, textpos)
         screen.blit(second_text, second_textpos)
@@ -279,10 +332,21 @@ while running:
 
         pygame.draw.rect(screen, "green", (wall_3_rect.x - camera_offset_x, wall_3_rect.y - camera_offset_y, wall_3_rect.width, wall_3_rect.height))
         
+        #Draw the floating platforms
         for platform_rect in platforms:
-            pygame.draw.rect(screen, "white", (platform_rect.x - camera_offset_x, platform_rect.y - camera_offset_y, platform_rect.width, platform_rect.height))
-        # Draws a circle to screen (again, this is redundant - remove this line)
-        # pygame.draw.circle(screen, "white", player_pos, player_radius)
+            pygame.draw.rect(screen, (242, 226, 177), (platform_rect.x - camera_offset_x, platform_rect.y - camera_offset_y, platform_rect.width, platform_rect.height))
+        
+        # Draw the end portal
+        pygame.draw.rect(screen, (212, 201, 190), (end_rect.x - camera_offset_x, end_rect.y - camera_offset_y, end_rect.width, end_rect.height))
+
+        #Draw Level 2 ground
+        pygame.draw.rect(screen, (247, 247, 247), (ground_2_rect.x - camera_offset_x, ground_2_rect.y - camera_offset_y, ground_2_rect.width, ground_2_rect.height))
+
+        #Draw Level 2 lower ground
+        pygame.draw.rect(screen, (160, 137, 99), (lower_ground_2_rect.x - camera_offset_x, lower_ground_2_rect.y - camera_offset_y, lower_ground_2_rect.width, lower_ground_2_rect.height))
+
+        #Draw Level 2 serect platform
+        pygame.draw.rect(screen, (242, 226, 177), (ground_3_rect.x - camera_offset_x, ground_3_rect.y - camera_offset_y, ground_3_rect.width, ground_3_rect.height))
 
         # Get pressed keys
         keys = pygame.key.get_pressed() #Move player with WASD
